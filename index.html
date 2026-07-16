@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Interview Coach</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+
+<body>
+
+    <div class="container">
+
+        <h1>🤖 AI Interview Coach</h1>
+
+        <p class="subtitle">
+            Generate personalized interview preparation using AI
+        </p>
+
+
+        <label>Your Name</label>
+        <input id="name" type="text" placeholder="Enter your name">
+
+
+        <label>Job Title</label>
+        <input id="job" type="text" placeholder="Example: Software Developer">
+
+
+        <label>Company</label>
+        <input id="company" type="text" placeholder="Example: Microsoft">
+
+
+        <label>Job Description</label>
+        <textarea 
+            id="description" 
+            placeholder="Paste the job description here..."
+            rows="8">
+        </textarea>
+
+
+        <button onclick="generateInterview()">
+            Generate Interview Plan
+        </button>
+
+
+        <div id="result"></div>
+
+
+    </div>
+
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
