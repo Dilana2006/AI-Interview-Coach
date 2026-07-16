@@ -1,47 +1,41 @@
-function generateInterview() {
+async function generateInterview() {
+
+    const name = document.getElementById("name").value;
+    const job = document.getElementById("job").value;
+    const company = document.getElementById("company").value;
 
 
-    const name =
-    document.getElementById("name").value;
+    document.getElementById("result").innerHTML = `
+        <h2>Generating AI Interview Plan... 🤖</h2>
+    `;
 
 
-    const job =
-    document.getElementById("job").value;
+    const response = await fetch(
+        "https://d2006d.app.n8n.cloud/webhook/interview-ai",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: name,
+                job: job,
+                company: company
+            })
+        }
+    );
 
 
-    const company =
-    document.getElementById("company").value;
+    const data = await response.json();
 
 
     document.getElementById("result").innerHTML = `
 
-    <h2>Interview Plan Ready 🔥</h2>
+        <h2>AI Interview Plan Ready 🔥</h2>
 
-    <p>
-    Candidate: ${name}
-    </p>
-
-    <p>
-    Position: ${job}
-    </p>
-
-    <p>
-    Company: ${company}
-    </p>
-
-    <br>
-
-    <h3>Sample Question:</h3>
-
-    <p>
-    Tell me about yourself.
-    </p>
-
-    <h3>STAR Answer Tip:</h3>
-
-    <p>
-    Explain your Situation, Task, Action, and Result.
-    </p>
+        <p>
+        ${data.output}
+        </p>
 
     `;
 
