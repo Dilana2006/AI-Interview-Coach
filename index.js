@@ -37,22 +37,41 @@ async function generateInterview() {
         );
 
 
-        const data = await response.json();
+        // Receive Word document from n8n
+        const blob = await response.blob();
+
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "AI_Interview_Plan.doc";
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+        window.URL.revokeObjectURL(url);
 
 
         document.getElementById("result").innerHTML = `
             <h2>AI Interview Plan Ready 🔥</h2>
-            <p>${data.output}</p>
+            <p>Your Word document has been generated successfully.</p>
         `;
 
 
     } catch (error) {
 
-        console.error(error);
+        console.error("Error:", error);
 
         document.getElementById("result").innerHTML = `
             <h2>Error ❌</h2>
             <p>Could not generate interview plan.</p>
         `;
     }
+
 }
