@@ -1,0 +1,145 @@
+{
+  "name": "AI Interview Coach - Word Document Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "interview-ai",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "7503d768-cc3c-4036-9e9a-476845d9b2cc",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "0a3aaf10-c5e3-450f-b41d-d211c4f35980"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "id"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are an AI interview coach.\n\nCreate a personalized interview preparation plan.\n\nCandidate name:\n{{$json.body.name}}\n\nTarget position:\n{{$json.body.job}}\n\nCompany:\n{{$json.body.company}}\n\nGenerate:\n1. A personalized interview introduction question\n2. 5 likely interview questions\n3. STAR method answer tips\n4. Preparation advice for the company and role"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "76c652dc-6570-4b42-8a3d-3ce39c4667fc",
+      "name": "Message a model",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ]
+
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a Word-openable (.doc) document from the AI answer.\nconst aiItem = $input.first();\nconst aiText = aiItem.json.output?.[0]?.content?.[0]?.text\n  || aiItem.json.text\n  || aiItem.json.message?.content\n  || '';\n\nconst body = $('Webhook').first().json.body || {};\nconst name = body.name || '';\nconst company = body.company || '';\nconst position = body.job || '';\n\nfunction esc(s) {\n  return String(s)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\nfunction inline(s) {\n  return esc(s).replace(/\\*\\*(.+?)\\*\\*/g, '<b>$1</b>');\n}\n\n// Lightweight markdown -> HTML conversion (headings, bold, lists, paragraphs).\nconst lines = String(aiText).split('\\n');\nlet bodyHtml = '';\nlet inList = false;\n\nfor (const raw of lines) {\n  const line = raw.trim();\n  const heading = line.match(/^(#{1,6})\\s+(.*)$/);\n  const bullet = line.match(/^[-*]\\s+(.*)$/);\n  const numbered = line.match(/^\\d+\\.\\s+(.*)$/);\n\n  if (heading) {\n    if (inList) { bodyHtml += '</ul>'; inList = false; }\n    const level = heading[1].length;\n    bodyHtml += '<h' + level + '>' + inline(heading[2]) + '</h' + level + '>';\n  } else if (bullet || numbered) {\n    if (!inList) { bodyHtml += '<ul>'; inList = true; }\n    bodyHtml += '<li>' + inline((bullet || numbered)[1]) + '</li>';\n  } else if (line === '') {\n    if (inList) { bodyHtml += '</ul>'; inList = false; }\n  } else {\n    if (inList) { bodyHtml += '</ul>'; inList = false; }\n    bodyHtml += '<p>' + inline(line) + '</p>';\n  }\n}\nif (inList) { bodyHtml += '</ul>'; }\n\nconst title = 'Interview Preparation - ' + esc(position) + ' at ' + esc(company);\nconst doc =\n  \"<html xmlns:o='urn:schemas-microsoft-com:office:office' \" +\n  \"xmlns:w='urn:schemas-microsoft-com:office:word' \" +\n  \"xmlns='http://www.w3.org/TR/REC-html40'>\" +\n  \"<head><meta charset='utf-8'><title>\" + title + \"</title>\" +\n  \"<style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.4;}\" +\n  \"h1{font-size:18pt;} h2{font-size:15pt;} h3{font-size:13pt;}</style></head>\" +\n  \"<body><h1>\" + title + \"</h1>\" +\n  \"<p><b>Candidate:</b> \" + esc(name) + \"</p>\" +\n  bodyHtml +\n  \"</body></html>\";\n\nconst safe = (name + '_' + company + '_' + position).replace(/[^a-zA-Z0-9_-]+/g, '_');\nconst fileName = 'Interview_Prep_' + safe + '.doc';\n\nconst binaryData = await this.helpers.prepareBinaryData(\n  Buffer.from(doc, 'utf8'),\n  fileName,\n  'application/msword',\n);\n\nreturn [{ json: { fileName }, binary: { data: binaryData } }];"
+      },
+      "id": "f5c3fb69-bef3-46c6-aa75-c3fbbefa0084",
+      "name": "Build Word Doc",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "responseDataSource": "set",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Disposition",
+                "value": "=attachment; filename=\"{{ $json.fileName }}\""
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Expose-Headers",
+                "value": "Content-Disposition"
+              }
+            ]
+          }
+        }
+      },
+      "id": "b970a0a5-93a8-4174-9356-55c18b8d51bf",
+      "name": "Respond with Document",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Build Word Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Word Doc": {
+      "main": [
+        [
+          {
+            "node": "Respond with Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "73cdfc0c-ab8f-4a68-a4fc-6bc71fd28134",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "id": "YOqAe1KtHH14TARd",
+  "tags": []
+}
