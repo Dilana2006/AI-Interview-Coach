@@ -1,9 +1,12 @@
 // Button connection
-document.getElementById("generateBtn")
-    .addEventListener("click", generateInterview);
+document.addEventListener("DOMContentLoaded", () => {
+
+    document.getElementById("generateBtn")
+        .addEventListener("click", generateInterview);
+
+});
 
 
-// Main AI function
 async function generateInterview() {
 
     const name = document.getElementById("name").value;
@@ -17,6 +20,7 @@ async function generateInterview() {
 
 
     try {
+
         const response = await fetch(
             "https://d2006d.app.n8n.cloud/webhook/interview-ai",
             {
@@ -40,6 +44,7 @@ async function generateInterview() {
             <h2>AI Interview Plan Ready 🔥</h2>
             <p>${data.output}</p>
         `;
+
 
     } catch (error) {
 
